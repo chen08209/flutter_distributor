@@ -25,6 +25,7 @@ class FlutterDistributor {
   final FlutterAppPublisher _publisher = FlutterAppPublisher();
 
   Pubspec? _pubspec;
+
   Pubspec get pubspec {
     if (_pubspec == null) {
       final yamlString = File('pubspec.yaml').readAsStringSync();
@@ -34,6 +35,7 @@ class FlutterDistributor {
   }
 
   final Map<String, String> _globalVariables = {};
+
   Map<String, String> get globalVariables {
     if (_globalVariables.keys.isEmpty) {
       for (String key in Platform.environment.keys) {
@@ -54,6 +56,7 @@ class FlutterDistributor {
   }
 
   DistributeOptions? _distributeOptions;
+
   DistributeOptions get distributeOptions {
     if (_distributeOptions == null) {
       File file = File('distribute_options.yaml');
@@ -126,6 +129,7 @@ class FlutterDistributor {
     List<String> targets, {
     String? channel,
     String? artifactName,
+    String? description,
     required bool cleanBeforeBuild,
     required Map<String, dynamic> buildArguments,
     Map<String, String>? variables,
@@ -178,6 +182,9 @@ class FlutterDistributor {
             'flavor': buildArguments['flavor'],
             'channel': channel,
             'artifact_name': artifactName,
+            'description': description,
+            if (Platform.isWindows)
+              'arch': (buildResult as BuildWindowsResult).arch,
           };
           MakeResult makeResult = await _packager.package(
             platform,

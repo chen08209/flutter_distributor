@@ -46,7 +46,11 @@ abstract class AppBuilder {
         buildArguments.add('--$key');
       } else if (value is Map) {
         for (String subKey in value.keys) {
-          buildArguments.addAll(['--$key', '$subKey=${value[subKey]}']);
+          if(key == "dart-define"){
+            buildArguments.add('--$key=$subKey=${value[subKey]}');
+          }else{
+            buildArguments.addAll(['--$key', '$subKey=${value[subKey]}']);
+          }
         }
       } else {
         buildArguments.addAll(['--$key', value]);

@@ -20,9 +20,14 @@ class MakeExeConfig extends MakeConfig {
   });
 
   factory MakeExeConfig.fromJson(Map<String, dynamic> json) {
-    List<String>? locales =
-        json['locales'] != null ? List<String>.from(json['locales']) : null;
-    if (locales == null || locales.isEmpty) locales = ['en'];
+    List<Map<String, dynamic>>? locales = json['locales'] != null
+        ? List<Map<String, dynamic>>.from(json['locales'])
+        : null;
+    if (locales == null || locales.isEmpty) {
+      locales = [
+        {'lang': 'en'}
+      ];
+    }
 
     MakeExeConfig makeExeConfig = MakeExeConfig(
       scriptTemplate: json['script_template'],
@@ -52,7 +57,7 @@ class MakeExeConfig extends MakeConfig {
   String? installDirName;
   String? setupIconFile;
   String? privilegesRequired;
-  List<String>? locales;
+  List<Map<String, dynamic>>? locales;
 
   String get defaultExecutableName {
     File executableFile = packagingDirectory
@@ -66,6 +71,7 @@ class MakeExeConfig extends MakeConfig {
   String get defaultInstallDirName => '{autopf64}\\$appName';
 
   String get sourceDir => p.basename(packagingDirectory.path);
+
   String get outputBaseFileName =>
       p.basename(outputFile.path).replaceAll('.exe', '');
 
@@ -74,6 +80,7 @@ class MakeExeConfig extends MakeConfig {
     return {
       'script_template': scriptTemplate,
       'app_id': appId,
+      'arch': arch,
       'app_name': appName,
       'app_version': appVersion.toString(),
       'executable_name': executableName,
