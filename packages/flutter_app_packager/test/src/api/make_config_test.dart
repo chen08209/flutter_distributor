@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('MakeConfig', () {
-    test('#1', () {
+    test('#1 standard artifact name without description', () {
       final makeConfig = MakeConfig()
         ..buildMode = 'release'
         ..buildOutputDirectory = Directory('build')
@@ -21,16 +21,18 @@ void main() {
         );
       expect(
         makeConfig.outputArtifactPath,
-        'dist/1.0.0/test_app-1.0.0-android.apk',
+        'dist/test_app-1.0.0-android.apk',
       );
     });
-    test('#2', () {
+
+    test('#2 artifact name with description / arch', () {
       final makeConfig = MakeConfig()
         ..buildMode = 'release'
         ..buildOutputDirectory = Directory('build')
         ..buildOutputFiles = []
-        ..platform = 'android'
-        ..packageFormat = 'apk'
+        ..platform = 'macos'
+        ..description = 'arm64'
+        ..packageFormat = 'dmg'
         ..outputDirectory = Directory('dist/')
         ..pubspec = Pubspec(
           'test_app',
@@ -38,7 +40,26 @@ void main() {
         );
       expect(
         makeConfig.outputArtifactPath,
-        'dist/1.0.0+1/test_app-1.0.0+1-android.apk',
+        'dist/test_app-1.0.0-macos-arm64.dmg',
+      );
+    });
+
+    test('#3 channel does not change the artifact name template', () {
+      final makeConfig = MakeConfig()
+        ..buildMode = 'release'
+        ..buildOutputDirectory = Directory('build')
+        ..buildOutputFiles = []
+        ..platform = 'android'
+        ..channel = 'production'
+        ..packageFormat = 'apk'
+        ..outputDirectory = Directory('dist/')
+        ..pubspec = Pubspec(
+          'test_app',
+          version: Version.parse('1.0.0'),
+        );
+      expect(
+        makeConfig.outputArtifactPath,
+        'dist/test_app-1.0.0-android.apk',
       );
     });
   });

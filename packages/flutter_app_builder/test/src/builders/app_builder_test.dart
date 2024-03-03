@@ -44,8 +44,7 @@ version: 1.2.3+4
     expect(shellExecutor.arguments, [
       'build',
       'windows',
-      '--dart-define',
-      'APP_ENV=test',
+      '--dart-define=APP_ENV=test',
       '--build-name',
       '1.2.3',
       '--build-number',

@@ -12,10 +12,13 @@ class AppPackageMakerDmg extends AppPackageMaker {
 
   @override
   String get name => 'dmg';
+
   @override
   String get platform => 'macos';
+
   @override
   bool get isSupportedOnCurrentPlatform => Platform.isMacOS;
+
   @override
   String get packageFormat => 'dmg';
 
@@ -45,7 +48,12 @@ class AppPackageMakerDmg extends AppPackageMaker {
         '${packagingDirectory.path}/make_config.json',
       );
       makeDmgConfigJsonFile.writeAsStringSync(json.encode(config.toJson()));
-
+      final file = File(config.outputFile.path);
+      if (file.existsSync()) {
+        file.deleteSync();
+      } else if (!file.parent.existsSync()) {
+        file.parent.createSync(recursive: true);
+      }
       ProcessResult processResult = await appdmg.exec([
         makeDmgConfigJsonFile.path,
         config.outputFile.path,

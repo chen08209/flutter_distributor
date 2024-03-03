@@ -58,31 +58,33 @@ ArchitecturesInstallIn64BitMode={{ARCHITECTURES_INSTALL_IN_64BIT_MODE}}
 
 [Languages]
 {% for locale in LOCALES %}
-{% if locale == 'en' %}Name: "english"; MessagesFile: "compiler:Default.isl"{% endif %}
-{% if locale == 'hy' %}Name: "armenian"; MessagesFile: "compiler:Languages\\Armenian.isl"{% endif %}
-{% if locale == 'bg' %}Name: "bulgarian"; MessagesFile: "compiler:Languages\\Bulgarian.isl"{% endif %}
-{% if locale == 'ca' %}Name: "catalan"; MessagesFile: "compiler:Languages\\Catalan.isl"{% endif %}
-{% if locale == 'zh' %}Name: "chinesesimplified"; MessagesFile: "compiler:Languages\\ChineseSimplified.isl"{% endif %}
-{% if locale == 'co' %}Name: "corsican"; MessagesFile: "compiler:Languages\\Corsican.isl"{% endif %}
-{% if locale == 'cs' %}Name: "czech"; MessagesFile: "compiler:Languages\\Czech.isl"{% endif %}
-{% if locale == 'da' %}Name: "danish"; MessagesFile: "compiler:Languages\\Danish.isl"{% endif %}
-{% if locale == 'nl' %}Name: "dutch"; MessagesFile: "compiler:Languages\\Dutch.isl"{% endif %}
-{% if locale == 'fi' %}Name: "finnish"; MessagesFile: "compiler:Languages\\Finnish.isl"{% endif %}
-{% if locale == 'fr' %}Name: "french"; MessagesFile: "compiler:Languages\\French.isl"{% endif %}
-{% if locale == 'de' %}Name: "german"; MessagesFile: "compiler:Languages\\German.isl"{% endif %}
-{% if locale == 'he' %}Name: "hebrew"; MessagesFile: "compiler:Languages\\Hebrew.isl"{% endif %}
-{% if locale == 'is' %}Name: "icelandic"; MessagesFile: "compiler:Languages\\Icelandic.isl"{% endif %}
-{% if locale == 'it' %}Name: "italian"; MessagesFile: "compiler:Languages\\Italian.isl"{% endif %}
-{% if locale == 'ja' %}Name: "japanese"; MessagesFile: "compiler:Languages\\Japanese.isl"{% endif %}
-{% if locale == 'no' %}Name: "norwegian"; MessagesFile: "compiler:Languages\\Norwegian.isl"{% endif %}
-{% if locale == 'pl' %}Name: "polish"; MessagesFile: "compiler:Languages\\Polish.isl"{% endif %}
-{% if locale == 'pt' %}Name: "portuguese"; MessagesFile: "compiler:Languages\\Portuguese.isl"{% endif %}
-{% if locale == 'ru' %}Name: "russian"; MessagesFile: "compiler:Languages\\Russian.isl"{% endif %}
-{% if locale == 'sk' %}Name: "slovak"; MessagesFile: "compiler:Languages\\Slovak.isl"{% endif %}
-{% if locale == 'sl' %}Name: "slovenian"; MessagesFile: "compiler:Languages\\Slovenian.isl"{% endif %}
-{% if locale == 'es' %}Name: "spanish"; MessagesFile: "compiler:Languages\\Spanish.isl"{% endif %}
-{% if locale == 'tr' %}Name: "turkish"; MessagesFile: "compiler:Languages\\Turkish.isl"{% endif %}
-{% if locale == 'uk' %}Name: "ukrainian"; MessagesFile: "compiler:Languages\\Ukrainian.isl"{% endif %}
+{% if locale.lang == 'en' %}Name: "english"; MessagesFile: "compiler:Default.isl"{% endif %}
+{% if locale.lang == 'hy' %}Name: "armenian"; MessagesFile: "compiler:Languages\\Armenian.isl"{% endif %}
+{% if locale.lang == 'bg' %}Name: "bulgarian"; MessagesFile: "compiler:Languages\\Bulgarian.isl"{% endif %}
+{% if locale.lang == 'ca' %}Name: "catalan"; MessagesFile: "compiler:Languages\\Catalan.isl"{% endif %}
+{% if locale.lang == 'zh' %}
+Name: "chineseSimplified"; MessagesFile: {% if locale.file %}{{ locale.file }}{% else %}"compiler:Languages\\ChineseSimplified.isl"{% endif %}
+{% endif %}
+{% if locale.lang == 'co' %}Name: "corsican"; MessagesFile: "compiler:Languages\\Corsican.isl"{% endif %}
+{% if locale.lang == 'cs' %}Name: "czech"; MessagesFile: "compiler:Languages\\Czech.isl"{% endif %}
+{% if locale.lang == 'da' %}Name: "danish"; MessagesFile: "compiler:Languages\\Danish.isl"{% endif %}
+{% if locale.lang == 'nl' %}Name: "dutch"; MessagesFile: "compiler:Languages\\Dutch.isl"{% endif %}
+{% if locale.lang == 'fi' %}Name: "finnish"; MessagesFile: "compiler:Languages\\Finnish.isl"{% endif %}
+{% if locale.lang == 'fr' %}Name: "french"; MessagesFile: "compiler:Languages\\French.isl"{% endif %}
+{% if locale.lang == 'de' %}Name: "german"; MessagesFile: "compiler:Languages\\German.isl"{% endif %}
+{% if locale.lang == 'he' %}Name: "hebrew"; MessagesFile: "compiler:Languages\\Hebrew.isl"{% endif %}
+{% if locale.lang == 'is' %}Name: "icelandic"; MessagesFile: "compiler:Languages\\Icelandic.isl"{% endif %}
+{% if locale.lang == 'it' %}Name: "italian"; MessagesFile: "compiler:Languages\\Italian.isl"{% endif %}
+{% if locale.lang == 'ja' %}Name: "japanese"; MessagesFile: "compiler:Languages\\Japanese.isl"{% endif %}
+{% if locale.lang == 'no' %}Name: "norwegian"; MessagesFile: "compiler:Languages\\Norwegian.isl"{% endif %}
+{% if locale.lang == 'pl' %}Name: "polish"; MessagesFile: "compiler:Languages\\Polish.isl"{% endif %}
+{% if locale.lang == 'pt' %}Name: "portuguese"; MessagesFile: "compiler:Languages\\Portuguese.isl"{% endif %}
+{% if locale.lang == 'ru' %}Name: "russian"; MessagesFile: "compiler:Languages\\Russian.isl"{% endif %}
+{% if locale.lang == 'sk' %}Name: "slovak"; MessagesFile: "compiler:Languages\\Slovak.isl"{% endif %}
+{% if locale.lang == 'sl' %}Name: "slovenian"; MessagesFile: "compiler:Languages\\Slovenian.isl"{% endif %}
+{% if locale.lang == 'es' %}Name: "spanish"; MessagesFile: "compiler:Languages\\Spanish.isl"{% endif %}
+{% if locale.lang == 'tr' %}Name: "turkish"; MessagesFile: "compiler:Languages\\Turkish.isl"{% endif %}
+{% if locale.lang == 'uk' %}Name: "ukrainian"; MessagesFile: "compiler:Languages\\Ukrainian.isl"{% endif %}
 {% endfor %}
 
 [Tasks]
@@ -114,34 +116,42 @@ class InnoSetupScript {
   final MakeExeConfig makeConfig;
 
   /// Filters locales to only include those whose language files actually exist.
-  List<String> _getAvailableLocales() {
-    List<String> locales = makeConfig.locales ?? ['en'];
-    if (locales.isEmpty) return ['en'];
+  List<Map<String, dynamic>> _getAvailableLocales() {
+    List<InnoSetupLocale> locales = makeConfig.locales ??
+        const [InnoSetupLocale(lang: 'en')];
+    if (locales.isEmpty) {
+      return const [{'lang': 'en'}];
+    }
 
     // Resolve the Inno Setup installation path
     String isccPath = InnoSetupCompiler.resolveIsccPath();
     String innoDir;
     if (isccPath == 'iscc') {
       // When falling back to PATH, the directory is unknown — keep all locales
-      return locales;
+      return locales.map((e) => e.toJson()).toList();
     } else {
       innoDir = path.dirname(isccPath);
     }
 
     // Filter: only keep locales whose .isl file exists at the Inno Setup path
-    List<String> available = [];
-    for (String locale in locales) {
-      String? languageFile = _localeToLanguageFile[locale];
+    List<Map<String, dynamic>> available = [];
+    for (var locale in locales) {
+      if (locale.file != null) {
+        available.add(locale.toJson());
+        continue;
+      }
+      String lang = locale.lang;
+      String? languageFile = _localeToLanguageFile[lang];
       if (languageFile == null) {
-        available.add(locale);
+        available.add(locale.toJson());
         continue;
       }
 
       // For English (default), Default.isl is in the ISCC root directory
-      if (locale == 'en') {
+      if (lang == 'en') {
         File defaultIsl = File(path.join(innoDir, languageFile));
         if (defaultIsl.existsSync()) {
-          available.add(locale);
+          available.add(locale.toJson());
         }
         continue;
       }
@@ -149,19 +159,27 @@ class InnoSetupScript {
       // Other language files are in the Languages subdirectory
       File langFile = File(path.join(innoDir, 'Languages', languageFile));
       if (langFile.existsSync()) {
-        available.add(locale);
+        available.add(locale.toJson());
       } else {
         print(
-          '[fastforge] Language file not found, skipping locale "$locale": ${langFile.path}',
+          '[fastforge] Language file not found, skipping locale "$lang": ${langFile.path}',
         );
       }
     }
 
-    if (available.isEmpty) return ['en'];
+    if (available.isEmpty) {
+      return const [{'lang': 'en'}];
+    }
     return available;
   }
 
   Future<File> createFile() async {
+    final resolvedArch = makeConfig.arch == 'arm64' ? 'arm64' : 'x64';
+    final archAllowed = makeConfig.architecturesAllowed ??
+        (makeConfig.arch != null ? resolvedArch : 'x64compatible');
+    final arch64Mode = makeConfig.architecturesInstallIn64BitMode ??
+        (makeConfig.arch != null ? resolvedArch : 'x64compatible');
+
     Map<String, dynamic> variables = {
       'APP_ID': makeConfig.appId,
       'APP_NAME': makeConfig.appName,
@@ -170,6 +188,7 @@ class InnoSetupScript {
           makeConfig.executableName ?? makeConfig.defaultExecutableName,
       'DISPLAY_NAME': makeConfig.displayName,
       'PUBLISHER_NAME': makeConfig.publisherName,
+      'ARCH': resolvedArch,
       'PUBLISHER_URL': makeConfig.publisherUrl,
       'CREATE_DESKTOP_ICON': makeConfig.createDesktopIcon,
       'LAUNCH_AT_STARTUP': makeConfig.launchAtStartup,
@@ -180,9 +199,8 @@ class InnoSetupScript {
       'LOCALES': _getAvailableLocales(),
       'SETUP_ICON_FILE': makeConfig.setupIconFile ?? '',
       'PRIVILEGES_REQUIRED': makeConfig.privilegesRequired ?? 'none',
-      'ARCHITECTURES_ALLOWED': makeConfig.architecturesAllowed ?? 'x64compatible',
-            'ARCHITECTURES_INSTALL_IN_64BIT_MODE':
-                makeConfig.architecturesInstallIn64BitMode ?? 'x64compatible',
+      'ARCHITECTURES_ALLOWED': archAllowed,
+      'ARCHITECTURES_INSTALL_IN_64BIT_MODE': arch64Mode,
     }..removeWhere((key, value) => value == null);
 
     Context context = Context.create();

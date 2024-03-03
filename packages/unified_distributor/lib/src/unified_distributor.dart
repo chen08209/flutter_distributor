@@ -43,6 +43,7 @@ class UnifiedDistributor {
   final FlutterAppPublisher _publisher = FlutterAppPublisher();
 
   Pubspec? _pubspec;
+
   Pubspec get pubspec {
     if (_pubspec == null) {
       final yamlString = File('pubspec.yaml').readAsStringSync();
@@ -52,6 +53,7 @@ class UnifiedDistributor {
   }
 
   final Map<String, String> _globalVariables = {};
+
   Map<String, String> get globalVariables {
     if (_globalVariables.keys.isEmpty) {
       for (String key in Platform.environment.keys) {
@@ -141,6 +143,7 @@ class UnifiedDistributor {
     List<String> targets, {
     String? channel,
     String? artifactName,
+    String? description,
     required bool cleanBeforeBuild,
     required Map<String, dynamic> buildArguments,
     Map<String, String>? variables,
@@ -199,6 +202,9 @@ class UnifiedDistributor {
             'flavor': buildArguments['flavor'],
             'channel': channel,
             'artifact_name': artifactName,
+            'description': description,
+            if (Platform.isWindows)
+              'arch': (buildResult as BuildWindowsResult).arch,
           };
           if (hooks != null) {
             arguments['hooks'] = hooks;

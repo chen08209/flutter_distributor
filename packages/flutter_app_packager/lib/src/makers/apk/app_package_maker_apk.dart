@@ -1,16 +1,43 @@
+import 'dart:io';
+
 import 'package:flutter_app_packager/src/api/app_package_maker.dart';
 
 class AppPackageMakerApk extends AppPackageMaker {
   @override
   String get name => 'apk';
+
   @override
   String get platform => 'android';
+
   @override
   String get packageFormat => 'apk';
 
   @override
   Future<MakeResult> make(MakeConfig config) {
-    config.buildOutputFiles.first.copySync(config.outputFile.path);
-    return Future.value(resultResolver.resolve(config));
+    final List<File> outputArtifacts = [];
+    for (final file in config.buildOutputFiles) {
+      final splits = file.uri.pathSegments.last.split('-');
+      if (splits.length > 2) {
+        final sublist = splits.sublist(1, splits.length - 1);
+        final outputPath = config.outputFile.path;
+        final lastDotIndex = outputPath.lastIndexOf('.');
+        final firstPart = outputPath.substring(0, lastDotIndex);
+        final lastPart = outputPath.substring(lastDotIndex + 1);
+        final output = '$firstPart-${sublist.join('-')}.$lastPart';
+        final outputFile = File(output);
+        file.copySync(outputFile.path);
+        outputArtifacts.add(outputFile);
+      } else {
+        final outputFile = config.outputFile;
+        file.copySync(outputFile.path);
+        outputArtifacts.add(outputFile);
+      }
+    }
+    return Future.value(
+      resultResolver.resolve(
+        config,
+        artifacts: outputArtifacts.isNotEmpty ? outputArtifacts : null,
+      ),
+    );
   }
 }

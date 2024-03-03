@@ -18,14 +18,19 @@ dependencies:
   args: ^2.2.0
   charset: ^2.0.1
   dio: ^5.3.4
-  flutter_app_builder: ^0.6.1
-  flutter_app_packager: ^0.6.11
-  flutter_app_publisher: ^0.6.9
+  flutter_app_builder:
+    path: ../flutter_app_builder
+  flutter_app_packager:
+    path: ../flutter_app_packager
+  flutter_app_publisher:
+    path: ../flutter_app_publisher
   logging: ^1.0.2
   path: ^1.8.1
   pubspec_parse: ^1.1.0
-  shell_executor: ^0.3.0
-  shell_uikit: ^0.3.0
+  shell_executor:
+    path: ../shell_executor
+  shell_uikit:
+    path: ../shell_uikit
   yaml: ^3.1.0
 
 dev_dependencies:

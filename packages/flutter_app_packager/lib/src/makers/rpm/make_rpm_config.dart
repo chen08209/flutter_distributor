@@ -27,7 +27,7 @@ class MakeRPMConfig extends MakeLinuxPackageConfig {
     this.buildArch,
     this.requires,
     this.buildRequires,
-    this.description,
+    this.specDescription,
     this.prep,
     this.build,
     this.install,
@@ -65,7 +65,10 @@ class MakeRPMConfig extends MakeLinuxPackageConfig {
       buildArch: json['build_arch'] as String? ?? _getArchitecture(),
       requires: (json['requires'] as List<dynamic>?)?.cast<String>(),
       buildRequires: (json['build_requires'] as List<dynamic>?)?.cast<String>(),
-      description: json['description'] as String?,
+      // The RPM spec '%description' text. Read from the same yaml key as
+      // upstream, but stored separately from MakeConfig.description (which is
+      // the artifact-name suffix set via `package --description`).
+      specDescription: json['description'] as String?,
       prep: json['prep'] as String?,
       build: json['build'] as String?,
       install: json['install'] as String?,
@@ -109,7 +112,7 @@ class MakeRPMConfig extends MakeLinuxPackageConfig {
   List<String>? requires;
   List<String>? buildRequires;
   //RPM postamble Spec file fields
-  String? description;
+  String? specDescription;
   String? prep;
   String? build;
   String? install;
@@ -152,7 +155,7 @@ class MakeRPMConfig extends MakeLinuxPackageConfig {
           'BuildArch': buildArch ?? _getArchitecture(),
         }..removeWhere((key, value) => value == null),
         'body': {
-          '%description': description ?? pubspec.description,
+          '%description': specDescription ?? pubspec.description,
           '%install': [
             'mkdir -p %{buildroot}%{_bindir}',
             'mkdir -p %{buildroot}%{_datadir}/%{name}',

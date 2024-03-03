@@ -48,7 +48,10 @@ class CommandPackage extends Command {
 
     argParser.addOption('channel', valueHelp: '');
     argParser.addOption('artifact-name', valueHelp: '');
-
+    argParser.addOption(
+      'description',
+      valueHelp: '',
+    );
     argParser.addFlag(
       'skip-clean',
       help: 'Whether or not to skip \'flutter clean\' before packaging.',
@@ -162,6 +165,7 @@ class CommandPackage extends Command {
       artifactName: artifactName,
       cleanBeforeBuild: !isSkipClean,
       buildArguments: buildArguments,
+      description: argResults?['description'],
       hooks: hooks,
     );
   }
@@ -171,38 +175,35 @@ class CommandPackage extends Command {
 
     if (argResults?.options == null) return buildArguments;
 
-    for (var option in argResults!.options) {
+    for (final option in argResults!.options) {
       if (!option.startsWith('build-')) continue;
+      if (!argResults!.wasParsed(option)) continue;
       dynamic value = argResults?[option];
+      if (value == null) continue;
 
       if (value is List) {
-        // ignore: prefer_for_elements_to_map_fromiterable
-        value = Map.fromIterable(
-          value,
-          key: (e) => e.split('=')[0],
-          value: (e) => e.split('=')[1],
-        );
+        if (value.isEmpty) continue;
+        final map = <String, String>{};
+        for (final item in value) {
+          if (item is String && item.contains('=')) {
+            final idx = item.indexOf('=');
+            map[item.substring(0, idx)] = item.substring(idx + 1);
+          }
+        }
+        value = map;
       }
 
-      buildArguments.putIfAbsent(
-        option.replaceAll('build-', ''),
-        () => value,
-      );
+      buildArguments[option.replaceFirst('build-', '')] = value;
     }
 
-    for (var arg in flutterBuildArgs?.split(',') ?? <String>[]) {
-      if (arg.split('=').length == 2) {
-        buildArguments.putIfAbsent(
-          arg.split('=').first,
-          () => arg.split('=').last,
-        );
-      } else if (arg.split('=').length == 1) {
-        buildArguments.putIfAbsent(
-          arg.split('=')[0],
-          () => true,
-        );
+    for (final arg in flutterBuildArgs?.split(',') ?? <String>[]) {
+      if (arg.isEmpty) continue;
+      final eqIndex = arg.indexOf('=');
+      if (eqIndex != -1) {
+        buildArguments[arg.substring(0, eqIndex)] =
+            arg.substring(eqIndex + 1);
       } else {
-        buildArguments.putIfAbsent(arg, () => true);
+        buildArguments[arg] = true;
       }
     }
 

@@ -1,14 +1,15 @@
 import 'dart:io';
 
+import 'package:flutter_app_packager/src/api/distribute_options_base.dart';
 import 'package:flutter_app_packager/src/api/make_error.dart';
 import 'package:mustache_template/mustache.dart';
+import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
+import 'package:yaml/yaml.dart';
 
 const _kArtifactName =
-    '{{name}}{{#flavor}}-{{flavor}}{{/flavor}}-{{build_name}}{{#has_build_number}}+{{build_number}}{{/has_build_number}}{{#is_profile}}-{{build_mode}}{{/is_profile}}-{{platform}}{{#is_installer}}-setup{{/is_installer}}{{#ext}}.{{ext}}{{/ext}}';
-const _kArtifactNameWithChannel =
-    '{{name}}-{{channel}}-{{build_name}}{{#has_build_number}}+{{build_number}}{{/has_build_number}}{{#is_profile}}-{{build_mode}}{{/is_profile}}-{{platform}}{{#is_installer}}-setup{{/is_installer}}{{#ext}}.{{ext}}{{/ext}}';
+    '{{name}}-{{build_name}}-{{platform}}{{#description}}-{{description}}{{/description}}{{#is_installer}}-setup{{/is_installer}}{{#ext}}.{{ext}}{{/ext}}';
 
 class MakeConfig {
   late bool isInstaller = false;
@@ -17,7 +18,9 @@ class MakeConfig {
   late List<File> buildOutputFiles;
   late String platform;
   String? flavor;
+  String? arch;
   String? channel;
+  String? description;
 
   /// https://mustache.github.io/mustache.5.html
   String? artifactName;
@@ -30,16 +33,21 @@ class MakeConfig {
   /// Shell commands to run after packaging.
   List<String>? postpackageHooks;
 
-  String get appName => pubspec.name;
-  String get appBinaryName => pubspec.name;
+  String get appName => distributeOptionsBase.appName ?? pubspec.name;
+
+  String get appBinaryName => distributeOptionsBase.appName ?? pubspec.name;
+
   Version get appVersion => pubspec.version!;
+
   String get appBuildName => appVersion.toString().split('+').first;
+
   String? get appBuildNumber {
     final parts = appVersion.toString().split('+');
     return parts.length > 1 ? parts.last : null;
   }
 
   Pubspec? _pubspec;
+  DistributeOptionsBase? _distributeOptionsBase;
   Directory? _packagingDirectory;
 
   MakeConfig copyWith(MakeConfig makeConfig) {
@@ -47,6 +55,8 @@ class MakeConfig {
     buildOutputDirectory = makeConfig.buildOutputDirectory;
     buildOutputFiles = makeConfig.buildOutputFiles;
     platform = makeConfig.platform;
+    description = makeConfig.description;
+    arch = makeConfig.arch;
     flavor = makeConfig.flavor;
     channel = makeConfig.channel;
     artifactName = makeConfig.artifactName;
@@ -66,7 +76,6 @@ class MakeConfig {
 
   String get outputArtifactPath {
     String useArtifactName = _kArtifactName;
-    if (channel != null) useArtifactName = _kArtifactNameWithChannel;
     if (artifactName != null) useArtifactName = artifactName!;
 
     Map<String, dynamic> variables = {
@@ -81,19 +90,19 @@ class MakeConfig {
       'platform': platform,
       'flavor': flavor,
       'channel': channel,
+      'description': description,
       'ext': packageFormat.isEmpty ? null : packageFormat,
     };
 
     String filename = Template(useArtifactName).renderString(variables);
 
-    Directory versionOutputDirectory =
-        Directory('${outputDirectory.path}$appVersion');
+    Directory versionOutputDirectory = Directory(outputDirectory.path);
 
     if (!versionOutputDirectory.existsSync()) {
       versionOutputDirectory.createSync(recursive: true);
     }
 
-    return '${versionOutputDirectory.path}/$filename';
+    return p.join(versionOutputDirectory.path, filename);
   }
 
   List<FileSystemEntity> get outputArtifacts {
@@ -131,6 +140,22 @@ class MakeConfig {
     _pubspec = pubspec;
   }
 
+  DistributeOptionsBase get distributeOptionsBase {
+    if (_distributeOptionsBase == null) {
+      final file = File('distribute_options.yaml');
+      if (file.existsSync()) {
+        final yamlDoc = loadYaml(file.readAsStringSync());
+        if (yamlDoc is Map) {
+          _distributeOptionsBase = DistributeOptionsBase.fromJson(
+            Map<String, dynamic>.from(yamlDoc),
+          );
+        }
+      }
+      _distributeOptionsBase ??= DistributeOptionsBase();
+    }
+    return _distributeOptionsBase!;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'isInstaller': isInstaller,
@@ -138,6 +163,8 @@ class MakeConfig {
       'buildOutputDirectory': buildOutputDirectory.path,
       'buildOutputFiles': buildOutputFiles.map((e) => e.path).toList(),
       'platform': platform,
+      'arch': arch,
+      'description': description,
       'flavor': flavor,
       'channel': channel,
       'artifactName': artifactName,
@@ -173,10 +200,12 @@ class DefaultMakeConfigLoader extends MakeConfigLoader {
   }) {
     final config = MakeConfig()
       ..platform = platform
+      ..arch = arguments?['arch']
       ..buildMode = arguments?['build_mode']
       ..buildOutputDirectory = buildOutputDirectory
       ..buildOutputFiles = buildOutputFiles
       ..flavor = arguments?['flavor']
+      ..description = arguments?['description']
       ..channel = arguments?['channel']
       ..artifactName = arguments?['artifact_name']
       ..packageFormat = packageFormat
@@ -204,6 +233,7 @@ class DefaultMakeConfigLoader extends MakeConfigLoader {
 
 class MakeLinuxPackageConfig extends MakeConfig {
   String? _appBinaryName;
+
   @override
   String get appBinaryName {
     if (_appBinaryName == null) {
