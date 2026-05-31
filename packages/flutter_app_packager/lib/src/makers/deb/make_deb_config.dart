@@ -218,6 +218,7 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
       essential: map['essential'],
       genericName: map['generic_name'],
       startupNotify: map['startup_notify'],
+      startupWmClass: map['startup_wm_class'],
       installedSize: map['installed_size'],
       icon: map['icon'],
       metainfo: map['metainfo'],
@@ -235,6 +236,7 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
   String? metainfo;
   String? genericName;
   bool? startupNotify;
+  String? startupWmClass;
   List<String>? coAuthors;
   List<String>? dependencies;
   List<String>? buildDependenciesIndep;
@@ -313,6 +315,7 @@ class MakeDebConfig extends MakeLinuxPackageConfig {
             ? '${keywords!.join(';')};'
             : null,
         'StartupNotify': startupNotify,
+        'StartupWMClass': startupWmClass,
       }..removeWhere((key, value) => value == null),
     };
   }
