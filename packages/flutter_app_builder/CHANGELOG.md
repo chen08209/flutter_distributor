@@ -1,3 +1,8 @@
+## Unreleased
+
+* fix: Pass the app version with Flutter's `--build-name` and
+  `--build-number` flags instead of reserved `--dart-define` keys.
+
 ## 0.6.0
 
 * feat: Support ohos platform.
