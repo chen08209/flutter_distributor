@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_app_packager/src/api/app_package_maker.dart';
+import 'package:flutter_app_packager/src/api/linux_permissions.dart';
 import 'package:flutter_app_packager/src/makers/deb/make_deb_config.dart';
 import 'package:path/path.dart' as path;
 import 'package:shell_executor/shell_executor.dart';
@@ -131,6 +132,7 @@ class AppPackageMakerDeb extends AppPackageMaker {
       '${appDirectory.path}/.',
       '${packagingDirectory.path}/opt/${makeConfig.appBinaryName}/',
     ]);
+    await normalizeLinuxPermissions(packagingDirectory.path);
 
     ProcessResult processResult = await $('dpkg-deb', [
       '--build',

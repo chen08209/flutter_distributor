@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_app_packager/src/api/app_package_maker.dart';
+import 'package:flutter_app_packager/src/api/linux_permissions.dart';
 import 'package:flutter_app_packager/src/makers/appimage/make_appimage_config.dart';
 import 'package:path/path.dart' as path;
 import 'package:shell_executor/shell_executor.dart';
@@ -76,6 +77,12 @@ class AppPackageMakerAppImage extends AppPackageMaker {
           throw MakeError(value.stderr as String);
         }
       });
+      await normalizeLinuxPermissions(
+        path.join(
+          makeConfig.packagingDirectory.path,
+          '${makeConfig.appName}.AppDir',
+        ),
+      );
 
       final desktopFile = File(
         path.join(
