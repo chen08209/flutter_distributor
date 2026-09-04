@@ -111,7 +111,7 @@ class MakeAppImageConfig extends MakeConfig {
 
 cd "\$(dirname "\$0")"
 export LD_LIBRARY_PATH=usr/lib
-exec ./$appName
+exec ./$appName "\$@"
 ''';
   }
 }
